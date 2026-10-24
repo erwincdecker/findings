@@ -1,21 +1,29 @@
-# Findings
+# Homelab Findings
 
-Public, shareable technical findings and upstream feature proposals. This repository contains **sanitized design documents**, not live system configurations, credentials, logs, or production-ready deployment scripts.
+An **English-language, public collection** of architectural notes, troubleshooting lessons, quality practices and upstream feature proposals for self-hosted services.
 
-## Lidarr: automatic import of incomplete albums
+This is neither a live infrastructure inventory nor a deployment source. Operational details and evidence remain private. See the [publication policy](PUBLICATION_POLICY.md).
 
-**Proposal:** allow Lidarr to automatically import *confidently matched existing tracks* from an incomplete album download, keep other tracks marked **Missing**, and then use Lidarr's normal Completed Download Handling to manage its Activity Queue and the associated Transmission download under existing seeding/removal rules.
+## Functional areas
 
-- [Full feature request and two proposed API integration routes](lidarr/automatic-partial-album-imports/PROPOSAL.md)
-- [Ready-to-post comment for Lidarr issue #5647](lidarr/automatic-partial-album-imports/UPSTREAM_COMMENT.md)
-- Upstream discussions: [Lidarr #5647](https://github.com/Lidarr/Lidarr/issues/5647) and [#5645](https://github.com/Lidarr/Lidarr/issues/5645)
+| Domain | Topics |
+| --- | --- |
+| [Architecture](architecture/README.md) | [Capability map](architecture/FUNCTIONAL_MAP.md) and cross-domain boundaries |
+| [Compute](infrastructure/compute/README.md) | Virtualization and high availability |
+| [Storage](infrastructure/storage/README.md) | Network filesystems, block storage and [Ceph](infrastructure/storage/ceph/README.md) |
+| [Backup and recovery](infrastructure/backup-recovery/README.md) | Restore testing and [Proxmox Backup Server](infrastructure/backup-recovery/proxmox-backup-server/README.md) |
+| [Networking](networking/ingress/README.md) | Reverse proxy and secure ingress |
+| [Security](security/README.md) | Monitoring, authentication and [proxy security](security/npm-sentinel/README.md) |
+| [Containers](platform/containers/README.md) | Runtime preservation, updates and health checks |
+| [Media](media/README.md) | [Lidarr](media/music/lidarr/README.md), [Jellyfin](media/video/jellyfin/README.md), [Arr applications](media/automation/arr-stack/README.md), [Transmission](media/downloads/transmission/README.md) |
+| [Applications](applications/README.md) | [Nextcloud](applications/files/nextcloud/README.md), [Immich](applications/photos/immich/README.md), [Home Assistant](applications/home-automation/home-assistant/README.md), [RustDesk](applications/remote-access/rustdesk/README.md) |
+| [Integration](integration/README.md) | Event messaging and [NATS JetStream](integration/nats-jetstream/README.md) |
+| [Automation](automation/agents/README.md) | Agent orchestration and [updates](automation/updates/README.md) |
+| [Operations](operations/README.md) | Change management, project coordination and documentation |
+| [Engineering](engineering/quality/README.md) | Quality assurance and release gates |
 
-**Preferred approach:** a built-in, optional import policy (default Off) exposed through Lidarr's existing configuration API and UI. A dedicated, validated preview/execute API could be a useful alternative for integrations, but would still need the native completed-download hook for fully automatic operation.
+## Featured finding
 
-**Status:** community proposal, **not an upstream patch**, not accepted/merged by Lidarr, and not established by an end-to-end production test.
+[Lidarr: opt-in automatic partial album imports](media/music/lidarr/README.md) explains a reproducible problem and suggests both a built-in import policy (preferred) and an optional dedicated API, while preserving Lidarr's normal download-client cleanup.
 
-### Safety and contribution notes
-
-The proposal deliberately avoids exposing any private download paths, server names, API tokens, internal repository contents or raw operational logs. It focuses on expected behavior, suggested entry points, safe cleanup, and regression testing.
-
-Feedback and discussion belong on [Lidarr's existing issue #5647](https://github.com/Lidarr/Lidarr/issues/5647), subject to maintainers' direction.
+All published findings should distinguish **DOCUMENTED**, **OBSERVED**, **PROPOSED** and **NOT VERIFIED**. A design or source commit is not proof of a deployed and tested outcome.
