@@ -2,7 +2,7 @@
 
 > **Upstream feature proposal.** Not yet accepted or implemented in Lidarr.
 >
-> This design is proposed for discussion in [Lidarr issue #5647](https://github.com/Lidarr/Lidarr/issues/5647), or a separate feature request if maintainers prefer. It is **not a tested, deployed, or upstream-approved patch**.
+> This design is proposed for discussion in [Lidarr issue #5647](https://github.com/Lidarr/Lidarr/issues/5647), or a separate feature request if maintainers prefer. It is **not an upstream-approved or deployed Lidarr patch**. An independently deployed *external* prototype is described in [field validation](PROTOTYPE_VALIDATION.md).
 
 ## Suggested issue title
 
@@ -31,14 +31,44 @@ The setting is about *per-track import eligibility on incomplete albums*, not a 
 
 ## Implementation direction (for maintainer discussion)
 
-A proof-of-concept approach under investigation uses an external **Python prototype** that:
+An external **Python prototype has now been deployed by an operator** (independent from Lidarr upstream). It:
 - inspects completed downloads rejected specifically for missing tracks;
 - retrieves Lidarr manual-import preview and checks unique artist/album/release/track identity;
 - submits `ManualImport` with the **original tracked download ID** so Lidarr's native completion handling remains responsible for any downstream cleanup;
 - verifies imported track relationships while leaving missing tracks missing; and
 - stops rather than guessing if mapping, eligibility, or execution outcome is ambiguous.
 
-This is **not upstream C# code** and is **not verified by a live end-to-end import/cleanup test**. If the maintainers support the feature, the preferred final implementation is inside Lidarr's existing C# import decision/track-import path, not a per-user external timer/service.
+This is **not upstream C# code** or an accepted Lidarr patch. A controlled
+real-world pilot **did** import nine present tracks from a 24-track edition;
+the nine imported library tracks were independently confirmed afterward.
+The operator confirmed that native client cleanup took place, but a
+separate authenticated RPC check was blocked (HTTP 401), so deletion
+was **not independently verified** by the audit. Another ambiguous
+13/15 partial release remains blocked for review. The external
+periodic timer was independently verified active, but new scheduled
+imports after deployment have not yet been separately confirmed.
+
+The prototype deliberately does not back up torrent source files because
+that operator is willing to redownload them. This is not a proposal to
+remove Lidarr's existing safety checks or impose this retention choice on
+other users. A source-quality allowlist follows the artist's own Lidarr
+quality profile; no automatic FLAC/MP3 quality ranking is invented.
+
+**Remaining fundamental risk:** checking that a track is absent via a
+separate API call is not atomic with the following ManualImport POST.
+The native import path may still enter the quality upgrade branch, even
+with `replaceExistingFiles=false`, if another writer changes the track
+between those steps. A built-in server-side, atomic missing-only gate
+should therefore be part of the upstream design. A well-verified
+external workaround is evidence for the need, not proof that the
+upstream design is already safe or finished.
+
+See the [sanitized validation and limitations](PROTOTYPE_VALIDATION.md)
+for the exact proof levels and unresolved checks.
+
+If the maintainers support the feature, the preferred final implementation
+is inside Lidarr's existing C# import decision/track-import path, not a
+per-user external timer/service.
 
 In `v3.1.0.4875`, the relevant path includes `NzbDrone.Core.MediaFiles.TrackImport.Manual.ManualImportService` and `DownloadCompletedEvent` for successfully processed tracked downloads. A linked ManualImport may also remove the original output folder under certain `ShouldDeleteFolder`/`CanMoveFiles` conditions; any upstream patch must preserve correct torrent seeding semantics and avoid premature deletion.
 
